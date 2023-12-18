@@ -25,7 +25,7 @@ pub(crate) async fn process_request(
 
     let bytes = match is_matching(&message, &opt.regex) {
         true => {
-            let bytes = build_fake_response(&message, opt.ip).map_err(ProcessBytesError::Build)?;
+            let bytes = build_fake_response(&message, opt.ip, opt.ttl).map_err(ProcessBytesError::Build)?;
             if opt.verbose >= 1 {
                 println!(
                     "[{}] matching domain {} from {} redirecting it to {}",

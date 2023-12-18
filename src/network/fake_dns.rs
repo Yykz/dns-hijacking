@@ -20,12 +20,13 @@ pub(crate) fn is_matching(message: &MessageRequest, re: &Regex) -> bool {
 pub(crate) fn build_fake_response(
     message: &MessageRequest,
     ip: Ipv4Addr,
+    ttl: u32
 ) -> Result<Vec<u8>, ProtoError> {
     let builder = MessageResponseBuilder::from_message_request(message);
     let header = Header::response_from_request(message.header());
 
     let name = message.query().original().name().clone();
-    let record = Record::from_rdata(name, 0, rdata::A(ip).into_rdata());
+    let record = Record::from_rdata(name, ttl, rdata::A(ip).into_rdata());
 
     let message_response = builder.build(header, [&record], [], [], []);
 

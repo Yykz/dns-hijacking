@@ -6,7 +6,7 @@ An asynchronous Fake DNS server that responds with a specified IP address to DNS
 
 - All DNS queries associated with domain names matching the specified regex are intercepted.
 - Intercepted queries will receive a fake answer containing the target IP address with empty Authority and Additional fields.
-- Fake responses have a TTL (Time To Live) of 0 to prevent lingering in the DNS cache after the program stops.
+- Fake responses have a default TTL (Time To Live) of 0 to prevent lingering in the DNS cache after the program stops.
 - The DNS queries that don't match the regex or don't concern IPv4 are sent to a Google DNS server (8.8.8.8).
 - The answer of the Google DNS server is sent back to the origin of the first query.
 
