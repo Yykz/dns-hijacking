@@ -32,7 +32,10 @@ async fn main() -> std::io::Result<()> {
 
     let mut buf = [0; 1472];
     loop {
-        let (len, addr) = sock.recv_from(&mut buf).await?;
+        let (len, addr) = match sock.recv_from(&mut buf).await {
+            Ok(data) => data,
+            Err(_) => continue,
+        };
         let bytes = buf[..len].to_vec();
         let tx = tx.clone();
         let opt = opt.clone();

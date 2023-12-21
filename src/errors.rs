@@ -1,5 +1,5 @@
 use hickory_proto::error::ProtoError;
-use std::{io, error::Error};
+use std::{error::Error, io};
 use tokio::sync::mpsc::error::SendError;
 
 #[derive(Debug)]
@@ -14,7 +14,9 @@ impl<T> std::fmt::Display for ProcessQueryError<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let err_msg = match self {
             ProcessQueryError::Read(err) => format!("failed to read query {}", err),
-            ProcessQueryError::BuildFakeAnswer(err) => format!("failed to build fake answer {}", err),
+            ProcessQueryError::BuildFakeAnswer(err) => {
+                format!("failed to build fake answer {}", err)
+            }
             ProcessQueryError::Resolve(err) => format!("failed to resolve real ip {}", err),
             ProcessQueryError::SendChannel(err) => format!("failed to send to channel {}", err),
         };
@@ -33,7 +35,7 @@ pub enum ResolveError {
     Bind(io::Error),
     Connect(io::Error),
     Send(io::Error),
-    Receive(io::Error)
+    Receive(io::Error),
 }
 
 impl std::fmt::Display for ResolveError {
@@ -48,6 +50,4 @@ impl std::fmt::Display for ResolveError {
     }
 }
 
-impl Error for ResolveError {
-    
-}
+impl Error for ResolveError {}
