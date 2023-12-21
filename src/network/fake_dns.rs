@@ -4,7 +4,9 @@ use hickory_proto::{error::ProtoError, op::Header, rr::Record};
 use hickory_server::authority::{MessageRequest, MessageResponseBuilder};
 use regex::Regex;
 use std::net::{IpAddr, Ipv4Addr, SocketAddr};
+use std::time::Duration;
 use tokio::net::UdpSocket;
+use tokio::time::timeout;
 
 use crate::errors::ResolveError;
 
@@ -46,7 +48,10 @@ pub(crate) async fn resolve_domain(bytes: Vec<u8>) -> ResolveResult {
 
     sock.send(&bytes).await.map_err(ResolveError::Send)?;
     let mut data = [0u8; 1472];
-    let len = sock.recv(&mut data).await.map_err(ResolveError::Receive)?;
+    let received = timeout(Duration::from_secs(1), sock.recv(&mut data))
+        .await
+        .map_err(ResolveError::Timeout)?;
+    let len = received.map_err(ResolveError::Receive)?;
 
     let bytes = data[..len].to_vec();
 

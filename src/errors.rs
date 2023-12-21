@@ -36,6 +36,7 @@ pub enum ResolveError {
     Connect(io::Error),
     Send(io::Error),
     Receive(io::Error),
+    Timeout(tokio::time::error::Elapsed),
 }
 
 impl std::fmt::Display for ResolveError {
@@ -45,6 +46,7 @@ impl std::fmt::Display for ResolveError {
             ResolveError::Connect(err) => format!("failed to connect to dns server {:?}", err),
             ResolveError::Send(err) => format!("failed to send to dns server {:?}", err),
             ResolveError::Receive(err) => format!("failed to receive from dns server {:?}", err),
+            ResolveError::Timeout(err) => format!("request timeout {}", err),
         };
         write!(f, "{}", err_msg)
     }
