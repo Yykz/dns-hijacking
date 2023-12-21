@@ -27,6 +27,7 @@ Arguments:
 
 Options:
     -v, --verbose...: Increase verbosity, and can be used multiple times.
+    -t, --ttl <TTL>   Time To Live of fake answer [default: 0]
     -h, --help: Print help.
     -V, --version: Print version.
 ```
