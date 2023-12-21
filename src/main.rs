@@ -9,7 +9,7 @@ mod cli;
 use cli::parse;
 
 mod network;
-use network::process_request;
+use network::process_query;
 
 type Sended = (Vec<u8>, SocketAddr);
 
@@ -37,7 +37,7 @@ async fn main() -> std::io::Result<()> {
         let tx = tx.clone();
         let opt = opt.clone();
         tokio::spawn(async move {
-            if let Err(err) = process_request(bytes, tx, addr, opt).await {
+            if let Err(err) = process_query(bytes, tx, addr, opt).await {
                 eprintln!("{:?}", err);
             }
         });

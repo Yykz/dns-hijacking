@@ -13,8 +13,8 @@ pub struct Options {
     #[arg(short, long, action = clap::ArgAction::Count)]
     pub verbose: u8,
     /// Time To Live of fake answer
-    #[arg(short, long, default_value_t=0)]
-    pub ttl: u32
+    #[arg(short, long, default_value_t = 0)]
+    pub ttl: u32,
 }
 
 pub fn parse() -> Options {
