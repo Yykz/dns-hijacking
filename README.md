@@ -12,7 +12,7 @@ An asynchronous Fake DNS server that responds with a specified IP address to DNS
 
 ## Limitations
 
-- Only support rtype A/AAAA
+- Only support rtype A(IPv4) and AAAA(IPv6).
 - Works only with UDP requests.
 - Maximum request size 1500 bytes.
   
