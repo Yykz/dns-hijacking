@@ -23,29 +23,33 @@ pub(crate) async fn process_query(
     let mut bindecoder = BinDecoder::new(&bytes);
     let message = MessageRequest::read(&mut bindecoder).map_err(ProcessQueryError::Read)?;
 
-    let bytes = match is_matching(&message, &opt.regex) {
-        true => {
-            let bytes = build_fake_response(&message, opt.ip, opt.ttl)
+    let bytes = match is_matching(&message, &opt.entries) {
+        Some(entry) => {
+            let bytes = build_fake_response(&message, entry, opt.ttl)
                 .map_err(ProcessQueryError::BuildFakeAnswer)?;
             if opt.verbose >= 1 {
                 println!(
-                    "[{}] matching domain {} from {} redirecting it to {}",
-                    Local::now().format("%Y-%m-%dT%H:%M:%S"),
+                    "[{}] Redirected request of type {} for {} to {}",
+                    Local::now().format("%H:%M:%S"),
+                    message.query().query_type(),
                     message.query().name(),
-                    addr,
-                    opt.ip
+                    entry
+                        .rdata
+                        .ip_addr()
+                        .map(|ip| ip.to_string())
+                        .unwrap_or_default()
                 );
             }
             bytes
         }
-        false => {
+        None => {
             let bytes = resolve_domain(bytes).await?;
             if opt.verbose >= 2 {
                 println!(
-                    "[{}] non-matching domain {} from {} resolved",
-                    Local::now().format("%Y-%m-%dT%H:%M:%S"),
+                    "[{}] Forwarded request of type '{}' for {}",
+                    Local::now().format("%H:%M:%S"),
+                    message.query().query_type(),
                     message.query().name(),
-                    addr
                 );
             }
             bytes

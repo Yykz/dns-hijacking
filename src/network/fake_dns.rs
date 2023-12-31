@@ -1,35 +1,40 @@
-use hickory_proto::rr::{rdata, RecordData, RecordType};
+use hickory_proto::rr::RecordData;
 use hickory_proto::serialize::binary::BinEncoder;
 use hickory_proto::{error::ProtoError, op::Header, rr::Record};
 use hickory_server::authority::{MessageRequest, MessageResponseBuilder};
-use regex::Regex;
 use std::net::{IpAddr, Ipv4Addr, SocketAddr};
 use std::time::Duration;
 use tokio::net::UdpSocket;
 use tokio::time::timeout;
 
+use crate::cli::Entry;
 use crate::errors::ResolveError;
 
 type ResolveResult = Result<Vec<u8>, ResolveError>;
 
-pub(crate) fn is_matching(message: &MessageRequest, re: &Regex) -> bool {
+pub(crate) fn is_matching<'a>(message: &MessageRequest, entries: &'a [Entry]) -> Option<&'a Entry> {
     let query = message.query();
 
-    query.query_type() == RecordType::A && re.is_match(&query.name().to_string())
+    entries.iter().find(|&entry| {
+        entry.rdata.record_type() == query.query_type()
+            && entry.regex.is_match(&query.name().to_string())
+    })
 }
 
 pub(crate) fn build_fake_response(
     message: &MessageRequest,
-    ip: Ipv4Addr,
+    entry: &Entry,
     ttl: u32,
 ) -> Result<Vec<u8>, ProtoError> {
     let builder = MessageResponseBuilder::from_message_request(message);
-    let header = Header::response_from_request(message.header());
+    let response_header = Header::response_from_request(message.header());
 
     let name = message.query().original().name().clone();
-    let record = Record::from_rdata(name, ttl, rdata::A(ip).into_rdata());
+    let rdata = entry.rdata.clone().into_rdata();
 
-    let message_response = builder.build(header, [&record], [], [], []);
+    let record = Record::from_rdata(name, ttl, rdata);
+
+    let message_response = builder.build(response_header, [&record], [], [], []);
 
     let mut buf = vec![0; 1472];
     let mut binencoder = BinEncoder::new(&mut buf);
