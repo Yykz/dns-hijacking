@@ -1,14 +1,79 @@
+use hickory_proto::rr::{rdata, record_data::RData, record_type::RecordType};
+use std::{
+    error::Error,
+    fmt::Display,
+    net::{Ipv4Addr, Ipv6Addr},
+    str::FromStr,
+};
+
 use clap::Parser;
 use regex::Regex;
-use std::net::Ipv4Addr;
+
+#[derive(Debug, Clone)]
+struct ParseError;
+
+impl Display for ParseError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "invalid input")
+    }
+}
+
+impl Error for ParseError {
+    fn source(&self) -> Option<&(dyn Error + 'static)> {
+        None
+    }
+
+    fn description(&self) -> &str {
+        "description() is deprecated; use Display"
+    }
+
+    fn cause(&self) -> Option<&dyn Error> {
+        self.source()
+    }
+}
+
+fn rdata_from_str(
+    rtype: &str,
+    replacement: &str,
+) -> Result<RData, Box<dyn Error + Send + Sync + 'static>> {
+    match RecordType::from_str(rtype)? {
+        RecordType::A => {
+            let ip = Ipv4Addr::from_str(replacement)?;
+            Ok(RData::A(rdata::A(ip)))
+        }
+        RecordType::AAAA => {
+            let ip = Ipv6Addr::from_str(replacement)?;
+            Ok(RData::AAAA(rdata::AAAA(ip)))
+        }
+        _ => Err(ParseError)?,
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct Entry {
+    pub regex: Regex,
+    pub rdata: RData,
+}
+
+impl Entry {
+    fn parse(entry: &str) -> Result<Entry, Box<dyn Error + Send + Sync + 'static>> {
+        let mut entry = entry.split(';');
+        let regex = Regex::new(entry.next().ok_or(ParseError)?)?;
+
+        let rdata = rdata_from_str(
+            entry.next().ok_or(ParseError)?,
+            entry.next().ok_or(ParseError)?,
+        )?;
+
+        Ok(Self { regex, rdata })
+    }
+}
 
 #[derive(Parser, Debug)]
 #[clap(version, about)]
 pub struct Options {
-    /// Regex that matches which domains are redirected
-    pub regex: Regex,
-    /// IP where the targeted domains are redirected
-    pub ip: Ipv4Addr,
+    #[clap(value_parser = Entry::parse, num_args = 1.., value_delimiter = ',')]
+    pub entries: Vec<Entry>,
     /// Increase verbosity, and can be used multiple times
     #[arg(short, long, action = clap::ArgAction::Count)]
     pub verbose: u8,
