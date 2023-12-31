@@ -29,7 +29,7 @@ pub(crate) async fn process_query(
                 .map_err(ProcessQueryError::BuildFakeAnswer)?;
             if opt.verbose >= 1 {
                 println!(
-                    "[{}] Redirected request of type {} for {} to {}",
+                    "[{}] Redirected request of type '{}' for {} to {}",
                     Local::now().format("%H:%M:%S"),
                     message.query().query_type(),
                     message.query().name(),
