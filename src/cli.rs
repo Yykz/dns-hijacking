@@ -34,15 +34,15 @@ impl Error for ParseError {
 
 fn rdata_from_str(
     rtype: &str,
-    replacement: &str,
+    replacement: Option<&str>,
 ) -> Result<RData, Box<dyn Error + Send + Sync + 'static>> {
     match RecordType::from_str(rtype)? {
         RecordType::A => {
-            let ip = Ipv4Addr::from_str(replacement)?;
+            let ip = Ipv4Addr::from_str(replacement.unwrap_or("127.0.0.1"))?;
             Ok(RData::A(rdata::A(ip)))
         }
         RecordType::AAAA => {
-            let ip = Ipv6Addr::from_str(replacement)?;
+            let ip = Ipv6Addr::from_str(replacement.unwrap_or("::1"))?;
             Ok(RData::AAAA(rdata::AAAA(ip)))
         }
         _ => Err(ParseError)?,
@@ -62,7 +62,7 @@ impl Entry {
 
         let rdata = rdata_from_str(
             entry.next().ok_or(ParseError)?,
-            entry.next().ok_or(ParseError)?,
+            entry.next(),
         )?;
 
         Ok(Self { regex, rdata })
@@ -73,6 +73,9 @@ impl Entry {
 #[clap(version, about)]
 pub struct Options {
     #[clap(value_parser = Entry::parse, num_args = 1.., value_delimiter = ',')]
+    /// List of entries that you want to redirect. They must be comma-separated, and each entry consists of a domain, rtype, and IP (which is local if you leave blank), separated by ';'.
+    /// 
+    /// Example: "google.com;A","example.com;AAAA;::1" redirects domains that match 'google.com' with IPv4 and domains that match 'example.com' with IPv6 to local.
     pub entries: Vec<Entry>,
     /// Increase verbosity, and can be used multiple times
     #[arg(short, long, action = clap::ArgAction::Count)]
